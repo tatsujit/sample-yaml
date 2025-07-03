@@ -1,0 +1,40 @@
+parameter_study:
+  type: "distribution_sampling"
+  
+  distribution_parameters:
+    n_samples: 50
+    distributions:
+      algorithm:
+        epsilon: 
+          type: "Beta"
+          alpha: 1.0
+          beta: 9.0  # 平均0.1のBeta分布
+        c:
+          type: "Gamma"
+          shape: 2.0
+          scale: 1.0
+      environment:
+        noise_std:
+          type: "LogNormal"
+          mu: 0.0
+          sigma: 0.5
+
+environments:
+  - name: "variable_bandit"
+    type: "gaussian"
+    means: [0.0, 0.2, 0.4, 0.6, 0.8]
+    stds: [1.0, 1.0, 1.0, 1.0, 1.0]
+
+algorithms:
+  - name: "epsilon_greedy"
+    type: "epsilon_greedy"
+    epsilon: 0.1
+    
+  - name: "ucb"
+    type: "ucb"
+    c: 2.0
+
+simulation:
+  steps: 1000
+  runs: 5
+  seed: 42

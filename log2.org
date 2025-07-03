@@ -1,0 +1,304 @@
+#+title: 大規模パラメータ探索システム設計ログ
+#+date: 2025-07-03
+#+author: Claude Code
+#+startup: overview
+
+* プロジェクト概要
+** 要件
+ユーザーからの要求：
+- 試したいパラメータの全ての組み合わせ（直積）でシミュレーション
+- パラメータを複数の方法で、異なった (Distributions.jlの) 分布からサンプリング
+- アルゴリズムと「問題（報酬分布の設定などの意味での）」の組み合わせを全て試す
+
+** 設計目標
+1. 大規模なパラメータ探索に対応
+2. 複数のサンプリング戦略をサポート
+3. 拡張可能で柔軟なアーキテクチャ
+4. 結果の構造化保存と分析機能
+
+* 設計アーキテクチャ
+
+** 抽象型階層
+#+begin_src julia
+abstract type ParameterSampler end
+
+struct GridSampler <: ParameterSampler           # 直積グリッド探索
+struct DistributionSampler <: ParameterSampler   # 確率分布サンプリング
+struct RandomSampler <: ParameterSampler         # ランダム選択
+struct LatinHypercubeSampler <: ParameterSampler # LHS
+#+end_src
+
+** サンプリング戦略
+
+*** 1. GridSampler (グリッドサーチ)
+- **用途**: 全組み合わせの網羅的探索
+- **特徴**: パラメータ範囲の直積を生成
+- **適用場面**: 少数パラメータの詳細分析
+
+#+begin_src julia
+# 例: 4×4×3 = 48の組み合わせ
+sampler = GridSampler(Dict(
+    "epsilon" => [0.01, 0.05, 0.1, 0.2],
+    "c" => [0.5, 1.0, 2.0, 4.0],
+    "noise_std" => [0.1, 0.5, 1.0]
+))
+#+end_src
+
+*** 2. DistributionSampler (分布サンプリング)  
+- **用途**: Distributions.jlを活用した確率的探索
+- **特徴**: 理論的分布に基づくサンプリング
+- **適用場面**: 事前知識がある場合の効率的探索
+
+#+begin_src julia
+# サポートする分布
+distributions = Dict(
+    "epsilon" => Beta(1.0, 9.0),      # 平均0.1の偏りあり分布
+    "c" => Gamma(2.0, 1.0),           # ガンマ分布
+    "noise_std" => LogNormal(0.0, 0.5) # 対数正規分布
+)
+sampler = DistributionSampler(distributions, 100)
+#+end_src
+
+*** 3. RandomSampler (ランダムサンプリング)
+- **用途**: 離散値からのランダム選択
+- **特徴**: 指定した値の集合からランダム選択
+- **適用場面**: 予備調査や探索的分析
+
+*** 4. LatinHypercubeSampler (LHS)
+- **用途**: 効率的な空間充填サンプリング
+- **特徴**: パラメータ空間を均等に分割
+- **適用場面**: 高次元パラメータの効率的探索
+
+** 実験設計システム
+#+begin_src julia
+struct ExperimentDesign
+    environments::Vector{Dict{String, Any}}      # 問題設定
+    algorithms::Vector{Dict{String, Any}}        # アルゴリズム
+    simulation_settings::Dict{String, Any}       # シミュレーション設定
+    parameter_sampler::Union{ParameterSampler, Nothing}
+    cross_product::Bool                          # 直積 vs ペアワイズ
+end
+#+end_src
+
+** 主要関数
+- ~generate_parameter_combinations()~ : パラメータ組み合わせ生成
+- ~generate_experiment_grid()~ : 実験グリッド作成
+- ~run_experiment_grid()~ : 大規模実験実行
+- ~save_experiment_results()~ : 結果の構造化保存
+
+* 実装ファイル
+
+** ファイル構成
+- ~advanced_experiment_design.jl~ (347行) : メインシステム
+- ~parameter_study_example.yaml~ : グリッドサーチ設定例
+- ~distribution_study_example.yaml~ : 分布サンプリング設定例  
+- ~advanced_main.jl~ : 実行エントリーポイント
+
+** 設定ファイル例
+
+*** グリッドサーチ設定
+#+begin_src yaml
+parameter_study:
+  type: "grid_search"
+  grid_parameters:
+    algorithm:
+      epsilon: [0.01, 0.05, 0.1, 0.2]
+      c: [0.5, 1.0, 2.0, 4.0]
+    environment:
+      noise_std: [0.1, 0.5, 1.0]
+    simulation:
+      steps: [500, 1000, 2000]
+
+environments:
+  - name: "easy_bandit"
+    type: "gaussian"
+    means: [0.1, 0.2, 0.3, 0.4, 0.5]
+    stds: [1.0, 1.0, 1.0, 1.0, 1.0]
+  
+  - name: "hard_bandit"
+    type: "gaussian"
+    means: [0.45, 0.5, 0.55]
+    stds: [1.0, 1.0, 1.0]
+
+algorithms:
+  - name: "epsilon_greedy"
+    type: "epsilon_greedy"
+    epsilon: 0.1
+    
+  - name: "ucb"
+    type: "ucb"
+    c: 2.0
+#+end_src
+
+*** 分布サンプリング設定
+#+begin_src yaml
+parameter_study:
+  type: "distribution_sampling"
+  distribution_parameters:
+    n_samples: 50
+    distributions:
+      algorithm:
+        epsilon: 
+          type: "Beta"
+          alpha: 1.0
+          beta: 9.0
+        c:
+          type: "Gamma"
+          shape: 2.0
+          scale: 1.0
+      environment:
+        noise_std:
+          type: "LogNormal"
+          mu: 0.0
+          sigma: 0.5
+#+end_src
+
+* 技術的詳細
+
+** パラメータ組み合わせ生成アルゴリズム
+
+*** GridSampler
+#+begin_src julia
+function generate_parameter_combinations(sampler::GridSampler)
+    param_names = collect(keys(sampler.param_ranges))
+    param_values = collect(values(sampler.param_ranges))
+    
+    combinations = []
+    for combo in Iterators.product(param_values...)
+        param_dict = Dict(zip(param_names, combo))
+        push!(combinations, param_dict)
+    end
+    
+    return combinations
+end
+#+end_src
+
+*** DistributionSampler  
+#+begin_src julia
+function generate_parameter_combinations(sampler::DistributionSampler)
+    combinations = []
+    for i in 1:sampler.n_samples
+        param_dict = Dict{String, Any}()
+        for (param_name, distribution) in sampler.param_distributions
+            param_dict[param_name] = rand(distribution)
+        end
+        push!(combinations, param_dict)
+    end
+    
+    return combinations
+end
+#+end_src
+
+** 実験グリッド生成
+パラメータサンプラーと実験設定を組み合わせて、全実験の組み合わせを生成：
+
+1. パラメータ組み合わせ生成
+2. 各パラメータ組み合わせに対して
+   - 各環境設定
+   - 各アルゴリズム設定
+   - との組み合わせを作成
+3. 実験辞書として構造化
+
+** 結果データ構造
+#+begin_example
+experiment_id | env_type | env_means    | alg_type       | alg_epsilon | param_noise_std | final_reward | final_regret
+1            | gaussian | [0.1,0.2]    | epsilon_greedy | 0.05        | 0.1            | 45.2         | 12.8
+2            | gaussian | [0.1,0.2]    | ucb            | -           | 0.1            | 48.1         | 9.3
+3            | gaussian | [0.45,0.5]   | epsilon_greedy | 0.1         | 0.5            | 42.8         | 15.2
+#+end_example
+
+* 使用シナリオ
+
+** シナリオ1: ハイパーパラメータ最適化
+#+begin_example
+目的: ε-greedyとUCBの最適パラメータ発見
+方法: グリッドサーチでε∈[0.01,0.2], c∈[0.5,4.0]を探索
+結果: 問題設定ごとの最適パラメータマップ
+#+end_example
+
+** シナリオ2: ロバスト性評価
+#+begin_example  
+目的: ノイズレベルに対するアルゴリズムのロバスト性評価
+方法: 分布サンプリングでnoise_std～LogNormal(0,0.5)
+結果: ノイズ耐性の定量的評価
+#+end_example
+
+** シナリオ3: 大規模比較研究
+#+begin_example
+目的: 10種類の問題×5種類のアルゴリズム×100パラメータ設定
+方法: Latin Hypercube Samplingで効率的探索
+結果: 5000実験の包括的性能比較
+#+end_example
+
+* 実装上の工夫
+
+** 1. 統一インターフェース
+全てのサンプラーが同じ ~generate_parameter_combinations()~ 関数でアクセス可能
+
+** 2. エラーハンドリング
+個別実験の失敗が全体を停止させない設計
+
+** 3. 進捗表示
+大規模実験での進捗状況をリアルタイム表示
+
+** 4. 結果の構造化
+CSV形式での保存により、後続の統計分析・可視化が容易
+
+** 5. 設定の柔軟性
+YAML設定により実行時にサンプリング戦略を変更可能
+
+* 拡張可能性
+
+** 新しいサンプリング手法の追加
+1. ~ParameterSampler~ を継承した新構造体を定義
+2. ~generate_parameter_combinations()~ 関数を実装
+3. 設定ファイルで新タイプを指定
+
+** 新しい分布のサポート
+Distributions.jlの任意の分布を設定ファイルで指定可能
+
+** 並列実行の追加
+Distributed.jlを活用した並列実験実行
+
+** 結果分析の拡張
+- 統計的仮説検定
+- 多次元可視化
+- インタラクティブダッシュボード
+
+* 性能考慮事項
+
+** メモリ効率
+- 大規模実験でのメモリ使用量最適化
+- 結果のストリーミング保存
+
+** 計算効率  
+- バッチ処理による最適化
+- 早期停止条件の実装
+
+** 再現性
+- 全実験での完全なシード管理
+- 実験メタデータの詳細記録
+
+* まとめ
+
+この設計により以下を達成：
+
+** 機能的達成
+- ✅ パラメータ全組み合わせの網羅的探索
+- ✅ 複数分布からの確率的サンプリング  
+- ✅ アルゴリズム×問題の全組み合わせテスト
+- ✅ 大規模実験の効率的実行
+
+** 技術的達成
+- ✅ 拡張可能なアーキテクチャ
+- ✅ 統一的なインターフェース
+- ✅ 構造化された結果保存
+- ✅ 設定による柔軟な実行制御
+
+** 実用的達成
+- ✅ 研究レベルの大規模実験対応
+- ✅ 産業応用での性能評価
+- ✅ 教育目的での段階的学習
+- ✅ 理論検証のための体系的実験
+
+この実装は、バンディット問題研究の基盤となる包括的なパラメータ探索システムを提供します。
