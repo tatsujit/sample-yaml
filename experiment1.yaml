@@ -1,0 +1,20 @@
+environment:
+  type: gaussian
+  means: [0.1, 0.2, 0.3, 0.4, 0.5]
+  stds: [1.0, 1.0, 1.0, 1.0, 1.0]
+
+simulation:
+  steps: 1000
+  runs: 10
+  seed: 42
+
+algorithms:
+  - name: "ε-greedy (ε=0.1)"
+    type: epsilon_greedy
+    epsilon: 0.1
+  - name: "ε-greedy (ε=0.01)"
+    type: epsilon_greedy
+    epsilon: 0.01
+  - name: "UCB (c=2)"
+    type: ucb
+    c: 2.0

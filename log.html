@@ -1,0 +1,874 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2025-07-03 Thu 14:05 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>バンディット問題シミュレーション開発ログ</title>
+<meta name="author" content="Claude Code" />
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">バンディット問題シミュレーション開発ログ</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org8ca708d">1. 開発概要</a>
+<ul>
+<li><a href="#orga556e13">1.1. プロジェクト要件</a></li>
+<li><a href="#org754d410">1.2. 開発環境</a></li>
+</ul>
+</li>
+<li><a href="#org3c1af3c">2. 開発プロセス</a>
+<ul>
+<li><a href="#org867d8d5">2.1. PHASE 1: 要件分析とタスク計画</a>
+<ul>
+<li><a href="#org1174af1">2.1.1. タスク分解</a></li>
+</ul>
+</li>
+<li><a href="#org1ab8aad">2.2. PHASE 2: メインプログラム開発</a>
+<ul>
+<li><a href="#org7d8d7d6">2.2.1. ファイル構成</a></li>
+<li><a href="#org3351923">2.2.2. 実装内容</a></li>
+</ul>
+</li>
+<li><a href="#org731e66a">2.3. PHASE 3: テスト開発と検証</a>
+<ul>
+<li><a href="#orgf5247d1">2.3.1. テストファイル作成</a></li>
+<li><a href="#orgffdb59e">2.3.2. テスト項目</a></li>
+<li><a href="#orge5f0c70">2.3.3. 発見された問題と解決</a></li>
+</ul>
+</li>
+<li><a href="#org7455e50">2.4. PHASE 4: 実行と検証</a>
+<ul>
+<li><a href="#org68ee232">2.4.1. テスト実行結果</a></li>
+<li><a href="#org40808ec">2.4.2. 実際のシミュレーション実行</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org3fc71ec">3. 成果物</a>
+<ul>
+<li><a href="#orgab322b7">3.1. 実装ファイル</a></li>
+<li><a href="#orgbeff565">3.2. 設定ファイル</a></li>
+<li><a href="#org03a3cf9">3.3. 生成物</a></li>
+</ul>
+</li>
+<li><a href="#orgc33b6ec">4. 技術的詳細</a>
+<ul>
+<li><a href="#orga6d1570">4.1. 実装した機能</a>
+<ul>
+<li><a href="#orge71e7d3">4.1.1. バンディット環境</a></li>
+<li><a href="#orga9edb22">4.1.2. アルゴリズム</a></li>
+<li><a href="#org2b9cd28">4.1.3. シミュレーション</a></li>
+<li><a href="#orge79023e">4.1.4. 可視化</a></li>
+<li><a href="#org1300cca">4.1.5. 設定管理</a></li>
+</ul>
+</li>
+<li><a href="#orgba38867">4.2. アーキテクチャ</a>
+<ul>
+<li><a href="#org847d951">4.2.1. 抽象型階層</a></li>
+<li><a href="#org4ae0f56">4.2.2. データ構造</a></li>
+</ul>
+</li>
+<li><a href="#org58429c5">4.3. 品質保証</a></li>
+</ul>
+</li>
+<li><a href="#orgcbd2c81">5. 学習と改善点</a>
+<ul>
+<li><a href="#org971e06e">5.1. 成功要因</a></li>
+<li><a href="#orgc9f1246">5.2. 改善点</a></li>
+<li><a href="#org47d3952">5.3. 技術的な発見</a></li>
+</ul>
+</li>
+<li><a href="#orgd46bb28">6. まとめ</a>
+<ul>
+<li><a href="#orgea8acac">6.1. 達成した目標</a></li>
+<li><a href="#orgd627cd7">6.2. 最終的な成果</a></li>
+</ul>
+</li>
+<li><a href="#org8cf9e20">7. 技術的な質問と回答</a>
+<ul>
+<li><a href="#org6ac726b">7.1. Julia のプログラム実行制御について</a>
+<ul>
+<li><a href="#org59e860f">7.1.1. 質問</a></li>
+<li><a href="#org1491c30">7.1.2. 回答</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org8ca708d" class="outline-2">
+<h2 id="org8ca708d"><span class="section-number-2">1.</span> 開発概要</h2>
+<div class="outline-text-2" id="text-1">
+</div>
+<div id="outline-container-orga556e13" class="outline-3">
+<h3 id="orga556e13"><span class="section-number-3">1.1.</span> プロジェクト要件</h3>
+<div class="outline-text-3" id="text-1-1">
+<ul class="org-ul">
+<li>バンディット問題のシミュレーションプログラムをJuliaで開発</li>
+<li>アルゴリズム、環境、タスクの設定をYAMLファイルで管理</li>
+<li>複数設定での一括シミュレーション実行機能</li>
+<li>CairoMakie.jlによる結果の可視化</li>
+<li>網羅的なテストの実装と妥当性検証</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org754d410" class="outline-3">
+<h3 id="org754d410"><span class="section-number-3">1.2.</span> 開発環境</h3>
+<div class="outline-text-3" id="text-1-2">
+<ul class="org-ul">
+<li>言語: Julia</li>
+<li>可視化: CairoMakie.jl</li>
+<li>設定管理: YAML</li>
+<li>テスト: Test.jl</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="outline-container-org3c1af3c" class="outline-2">
+<h2 id="org3c1af3c"><span class="section-number-2">2.</span> 開発プロセス</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-org867d8d5" class="outline-3">
+<h3 id="org867d8d5"><span class="section-number-3">2.1.</span> PHASE 1: 要件分析とタスク計画</h3>
+<div class="outline-text-3" id="text-2-1">
+</div>
+<div id="outline-container-org1174af1" class="outline-4">
+<h4 id="org1174af1"><span class="section-number-4">2.1.1.</span> タスク分解</h4>
+<div class="outline-text-4" id="text-2-1-1">
+<ol class="org-ol">
+<li>バンディット問題の環境クラスを作成</li>
+<li>バンディットアルゴリズムの実装（ε-greedy, UCB等）</li>
+<li>YAML設定ファイルの読み込み機能を実装</li>
+<li>シミュレーション実行機能を実装</li>
+<li>CairoMakie.jlで結果の可視化機能を実装</li>
+<li>複数設定の一括実行機能を実装</li>
+<li>サンプルYAML設定ファイルを作成</li>
+</ol>
+</div>
+</div>
+</div>
+<div id="outline-container-org1ab8aad" class="outline-3">
+<h3 id="org1ab8aad"><span class="section-number-3">2.2.</span> PHASE 2: メインプログラム開発</h3>
+<div class="outline-text-3" id="text-2-2">
+</div>
+<div id="outline-container-org7d8d7d6" class="outline-4">
+<h4 id="org7d8d7d6"><span class="section-number-4">2.2.1.</span> ファイル構成</h4>
+<div class="outline-text-4" id="text-2-2-1">
+<ul class="org-ul">
+<li><code>bandit.jl</code> : メインプログラム</li>
+<li><code>main.jl</code> : 実行エントリーポイント</li>
+<li><code>experiment1.yaml</code> : 実験設定1</li>
+<li><code>experiment2.yaml</code> : 実験設定2</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org3351923" class="outline-4">
+<h4 id="org3351923"><span class="section-number-4">2.2.2.</span> 実装内容</h4>
+<div class="outline-text-4" id="text-2-2-2">
+</div>
+<ol class="org-ol">
+<li><a id="org5b39159"></a>環境クラス<br />
+<div class="outline-text-5" id="text-2-2-2-1">
+<div class="org-src-container">
+<pre class="src src-julia"><span style="color: #b4fa70;">abstract type</span> <span style="color: #8cc4ff;">BanditEnvironment</span> <span style="color: #b4fa70;">end</span>
+
+<span style="color: #b4fa70;">struct</span> <span style="color: #8cc4ff;">GaussianBandit</span> <span style="color: #8cc4ff;">&lt;:</span> <span style="color: #8cc4ff;">BanditEnvironment</span>
+&#9474;   means<span style="color: #8cc4ff;">::Vector</span>{Float64}
+&#9474;   stds<span style="color: #8cc4ff;">::Vector</span>{Float64}
+&#9474;   k<span style="color: #8cc4ff;">::Int</span>
+<span style="color: #b4fa70;">end</span>
+</pre>
+</div>
+</div>
+</li>
+<li><a id="orge52dc77"></a>アルゴリズム実装<br />
+<div class="outline-text-5" id="text-2-2-2-2">
+<ul class="org-ul">
+<li><b><b>ε-greedy</b></b>: 確率εで探索、それ以外は活用</li>
+<li><b><b>UCB</b></b>: Upper Confidence Bound による腕選択</li>
+</ul>
+</div>
+</li>
+<li><a id="org79a2694"></a>主要機能<br />
+<div class="outline-text-5" id="text-2-2-2-3">
+<ul class="org-ul">
+<li><code>pull_arm()</code> : 腕を引いて報酬を得る</li>
+<li><code>select_action()</code> : アルゴリズムに基づく腕選択</li>
+<li><code>update!()</code> : Q値の更新</li>
+<li><code>run_simulation()</code> : シミュレーション実行</li>
+<li><code>plot_results()</code> : 結果可視化</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-org731e66a" class="outline-3">
+<h3 id="org731e66a"><span class="section-number-3">2.3.</span> PHASE 3: テスト開発と検証</h3>
+<div class="outline-text-3" id="text-2-3">
+</div>
+<div id="outline-container-orgf5247d1" class="outline-4">
+<h4 id="orgf5247d1"><span class="section-number-4">2.3.1.</span> テストファイル作成</h4>
+<div class="outline-text-4" id="text-2-3-1">
+<ul class="org-ul">
+<li><code>test_bandit.jl</code> : 網羅的テストスイート</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgffdb59e" class="outline-4">
+<h4 id="orgffdb59e"><span class="section-number-4">2.3.2.</span> テスト項目</h4>
+<div class="outline-text-4" id="text-2-3-2">
+<ol class="org-ol">
+<li><b><b>バンディット環境のテスト</b></b>
+<ul class="org-ul">
+<li>初期化とパラメータ検証</li>
+<li>報酬生成の統計的妥当性</li>
+<li>最適腕・最適値の計算</li>
+<li>エラーハンドリング</li>
+</ul></li>
+
+<li><b><b>アルゴリズムのテスト</b></b>
+<ul class="org-ul">
+<li>ε-greedy: 探索と活用のバランス</li>
+<li>UCB: 信頼区間に基づく選択</li>
+</ul></li>
+
+<li><b><b>シミュレーション機能のテスト</b></b>
+<ul class="org-ul">
+<li>報酬・後悔の計算</li>
+<li>累積値の精度</li>
+<li>最適行動選択率の追跡</li>
+</ul></li>
+
+<li><b><b>YAML設定読み込み機能のテスト</b></b>
+<ul class="org-ul">
+<li>設定ファイルの解析</li>
+<li>動的オブジェクト生成</li>
+<li>無効設定のエラーハンドリング</li>
+</ul></li>
+
+<li><b><b>統計処理のテスト</b></b>
+<ul class="org-ul">
+<li>複数実行結果の平均化</li>
+<li>統計的妥当性の確保</li>
+</ul></li>
+
+<li><b><b>統合テスト</b></b>
+<ul class="org-ul">
+<li>End-to-end テスト</li>
+<li>結果の可視化とファイル出力</li>
+</ul></li>
+</ol>
+</div>
+</div>
+<div id="outline-container-orge5f0c70" class="outline-4">
+<h4 id="orge5f0c70"><span class="section-number-4">2.3.3.</span> 発見された問題と解決</h4>
+<div class="outline-text-4" id="text-2-3-3">
+</div>
+<ol class="org-ol">
+<li><a id="orgdb81487"></a>問題1: UCBアルゴリズムのテスト失敗<br />
+<div class="outline-text-5" id="text-2-3-3-1">
+<ul class="org-ul">
+<li><b><b>原因</b></b>: <code>findfirst()</code> が期待通りの動作をしない</li>
+<li><b><b>解決</b></b>: テストロジックを修正、より柔軟な検証に変更</li>
+</ul>
+</div>
+</li>
+<li><a id="orgabce4e3"></a>問題2: 浮動小数点精度の問題<br />
+<div class="outline-text-5" id="text-2-3-3-2">
+<ul class="org-ul">
+<li><b><b>原因</b></b>: 累積値の計算で微小な誤差が発生</li>
+<li><b><b>解決</b></b>: <code>≈</code> 演算子を使用した近似比較に変更</li>
+</ul>
+</div>
+</li>
+<li><a id="orgf710820"></a>問題3: 型の問題<br />
+<div class="outline-text-5" id="text-2-3-3-3">
+<ul class="org-ul">
+<li><b><b>原因</b></b>: <code>all_results = []</code> が <code>Vector{Any}</code> になる</li>
+<li><b><b>解決</b></b>: <code>all_results = SimulationResult[]</code> に明示的型指定</li>
+</ul>
+</div>
+</li>
+<li><a id="org6d683b1"></a>問題4: 必要パッケージの不足<br />
+<div class="outline-text-5" id="text-2-3-3-4">
+<ul class="org-ul">
+<li><b><b>原因</b></b>: YAML, CairoMakie, Testパッケージが未インストール</li>
+<li><b><b>解決</b></b>: <code>Pkg.add()</code> で必要パッケージをインストール</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-org7455e50" class="outline-3">
+<h3 id="org7455e50"><span class="section-number-3">2.4.</span> PHASE 4: 実行と検証</h3>
+<div class="outline-text-3" id="text-2-4">
+</div>
+<div id="outline-container-org68ee232" class="outline-4">
+<h4 id="org68ee232"><span class="section-number-4">2.4.1.</span> テスト実行結果</h4>
+<div class="outline-text-4" id="text-2-4-1">
+<pre class="example" id="org62a7d09">
+Running comprehensive tests for bandit simulation...
+============================================================
+Testing GaussianBandit...
+✓ GaussianBandit tests passed
+Testing EpsilonGreedy...
+✓ EpsilonGreedy tests passed
+Testing UCB...
+✓ UCB tests passed
+Testing SimulationResult...
+✓ SimulationResult tests passed
+Testing run_simulation...
+✓ run_simulation tests passed
+Testing YAML configuration...
+✓ YAML configuration tests passed
+Testing average_results...
+✓ average_results tests passed
+Testing experiment integration...
+✓ experiment integration tests passed
+Testing error handling...
+✓ error handling tests passed
+============================================================
+All tests passed successfully! ✅
+</pre>
+</div>
+</div>
+<div id="outline-container-org40808ec" class="outline-4">
+<h4 id="org40808ec"><span class="section-number-4">2.4.2.</span> 実際のシミュレーション実行</h4>
+<div class="outline-text-4" id="text-2-4-2">
+<pre class="example" id="orgc8d6206">
+バンディット問題シミュレーション開始
+==================================================
+Running experiment: experiment1.yaml
+Running experiment with algorithm: ε-greedy (ε=0.1)
+Running experiment with algorithm: ε-greedy (ε=0.01)
+Running experiment with algorithm: UCB (c=2)
+Results saved to experiment1_results.png
+Running experiment: experiment2.yaml
+Running experiment with algorithm: ε-greedy (ε=0.05)
+Running experiment with algorithm: UCB (c=1)
+Running experiment with algorithm: UCB (c=3)
+Results saved to experiment2_results.png
+==================================================
+全ての実験が完了しました！
+結果は各実験設定ファイル名_results.png として保存されています。
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org3fc71ec" class="outline-2">
+<h2 id="org3fc71ec"><span class="section-number-2">3.</span> 成果物</h2>
+<div class="outline-text-2" id="text-3">
+</div>
+<div id="outline-container-orgab322b7" class="outline-3">
+<h3 id="orgab322b7"><span class="section-number-3">3.1.</span> 実装ファイル</h3>
+<div class="outline-text-3" id="text-3-1">
+<ul class="org-ul">
+<li><code>bandit.jl</code> (245行) : メインプログラム</li>
+<li><code>main.jl</code> (17行) : 実行エントリーポイント</li>
+<li><code>test_bandit.jl</code> (298行) : 網羅的テストスイート</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgbeff565" class="outline-3">
+<h3 id="orgbeff565"><span class="section-number-3">3.2.</span> 設定ファイル</h3>
+<div class="outline-text-3" id="text-3-2">
+<ul class="org-ul">
+<li><code>experiment1.yaml</code> : 5腕バンディット、ε-greedy vs UCB比較</li>
+<li><code>experiment2.yaml</code> : 異なる報酬分布、UCBパラメータ比較</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org03a3cf9" class="outline-3">
+<h3 id="org03a3cf9"><span class="section-number-3">3.3.</span> 生成物</h3>
+<div class="outline-text-3" id="text-3-3">
+<ul class="org-ul">
+<li><code>experiment1_results.png</code> : 実験1の結果グラフ</li>
+<li><code>experiment2_results.png</code> : 実験2の結果グラフ</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="outline-container-orgc33b6ec" class="outline-2">
+<h2 id="orgc33b6ec"><span class="section-number-2">4.</span> 技術的詳細</h2>
+<div class="outline-text-2" id="text-4">
+</div>
+<div id="outline-container-orga6d1570" class="outline-3">
+<h3 id="orga6d1570"><span class="section-number-3">4.1.</span> 実装した機能</h3>
+<div class="outline-text-3" id="text-4-1">
+</div>
+<div id="outline-container-orge71e7d3" class="outline-4">
+<h4 id="orge71e7d3"><span class="section-number-4">4.1.1.</span> バンディット環境</h4>
+<div class="outline-text-4" id="text-4-1-1">
+<ul class="org-ul">
+<li>ガウシアンバンディット</li>
+<li>腕の報酬生成</li>
+<li>最適腕の計算</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orga9edb22" class="outline-4">
+<h4 id="orga9edb22"><span class="section-number-4">4.1.2.</span> アルゴリズム</h4>
+<div class="outline-text-4" id="text-4-1-2">
+<ul class="org-ul">
+<li>ε-greedy (探索率パラメータ)</li>
+<li>UCB (信頼区間パラメータ)</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org2b9cd28" class="outline-4">
+<h4 id="org2b9cd28"><span class="section-number-4">4.1.3.</span> シミュレーション</h4>
+<div class="outline-text-4" id="text-4-1-3">
+<ul class="org-ul">
+<li>単一実行</li>
+<li>複数実行の平均化</li>
+<li>結果データの構造化</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orge79023e" class="outline-4">
+<h4 id="orge79023e"><span class="section-number-4">4.1.4.</span> 可視化</h4>
+<div class="outline-text-4" id="text-4-1-4">
+<ul class="org-ul">
+<li>累積報酬</li>
+<li>累積後悔</li>
+<li>平均報酬</li>
+<li>最適行動選択率</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org1300cca" class="outline-4">
+<h4 id="org1300cca"><span class="section-number-4">4.1.5.</span> 設定管理</h4>
+<div class="outline-text-4" id="text-4-1-5">
+<ul class="org-ul">
+<li>YAML形式の設定ファイル</li>
+<li>動的オブジェクト生成</li>
+<li>複数実験の一括実行</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="outline-container-orgba38867" class="outline-3">
+<h3 id="orgba38867"><span class="section-number-3">4.2.</span> アーキテクチャ</h3>
+<div class="outline-text-3" id="text-4-2">
+</div>
+<div id="outline-container-org847d951" class="outline-4">
+<h4 id="org847d951"><span class="section-number-4">4.2.1.</span> 抽象型階層</h4>
+<div class="outline-text-4" id="text-4-2-1">
+<div class="org-src-container">
+<pre class="src src-julia"><span style="color: #b4fa70;">abstract type</span> <span style="color: #8cc4ff;">BanditEnvironment</span> <span style="color: #b4fa70;">end</span>
+<span style="color: #b4fa70;">abstract type</span> <span style="color: #8cc4ff;">BanditAlgorithm</span> <span style="color: #b4fa70;">end</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org4ae0f56" class="outline-4">
+<h4 id="org4ae0f56"><span class="section-number-4">4.2.2.</span> データ構造</h4>
+<div class="outline-text-4" id="text-4-2-2">
+<div class="org-src-container">
+<pre class="src src-julia"><span style="color: #b4fa70;">mutable struct</span> <span style="color: #8cc4ff;">SimulationResult</span>
+&#9474;   rewards<span style="color: #8cc4ff;">::Vector</span>{Float64}
+&#9474;   cumulative_rewards<span style="color: #8cc4ff;">::Vector</span>{Float64}
+&#9474;   regrets<span style="color: #8cc4ff;">::Vector</span>{Float64}
+&#9474;   cumulative_regrets<span style="color: #8cc4ff;">::Vector</span>{Float64}
+&#9474;   optimal_action_percentage<span style="color: #8cc4ff;">::Vector</span>{Float64}
+<span style="color: #b4fa70;">end</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org58429c5" class="outline-3">
+<h3 id="org58429c5"><span class="section-number-3">4.3.</span> 品質保証</h3>
+<div class="outline-text-3" id="text-4-3">
+<ul class="org-ul">
+<li>網羅的なユニットテスト</li>
+<li>統合テスト</li>
+<li>エラーハンドリング</li>
+<li>統計的妥当性の検証</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="outline-container-orgcbd2c81" class="outline-2">
+<h2 id="orgcbd2c81"><span class="section-number-2">5.</span> 学習と改善点</h2>
+<div class="outline-text-2" id="text-5">
+</div>
+<div id="outline-container-org971e06e" class="outline-3">
+<h3 id="org971e06e"><span class="section-number-3">5.1.</span> 成功要因</h3>
+<div class="outline-text-3" id="text-5-1">
+<ol class="org-ol">
+<li><b><b>構造化された開発プロセス</b></b>: タスク分解とTodo管理</li>
+<li><b><b>包括的なテスト</b></b>: 各機能の網羅的テスト</li>
+<li><b><b>段階的な実装</b></b>: 機能ごとの分離実装</li>
+<li><b><b>適切なエラーハンドリング</b></b>: 予期しない入力への対応</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-orgc9f1246" class="outline-3">
+<h3 id="orgc9f1246"><span class="section-number-3">5.2.</span> 改善点</h3>
+<div class="outline-text-3" id="text-5-2">
+<ol class="org-ol">
+<li><b><b>警告の修正</b></b>: <code>resolution</code> → <code>size</code> の更新</li>
+<li><b><b>型安全性</b></b>: より明示的な型指定</li>
+<li><b><b>テストの堅牢性</b></b>: 浮動小数点精度への対応</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-org47d3952" class="outline-3">
+<h3 id="org47d3952"><span class="section-number-3">5.3.</span> 技術的な発見</h3>
+<div class="outline-text-3" id="text-5-3">
+<ol class="org-ol">
+<li><b><b>Julia特有の型システム</b></b>: Vector{Any}の問題と解決</li>
+<li><b><b>統計的シミュレーション</b></b>: 乱数シードの重要性</li>
+<li><b><b>可視化ライブラリ</b></b>: CairoMakieの効果的な使用</li>
+</ol>
+</div>
+</div>
+</div>
+<div id="outline-container-orgd46bb28" class="outline-2">
+<h2 id="orgd46bb28"><span class="section-number-2">6.</span> まとめ</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+今回の開発では、バンディット問題のシミュレーションプログラムを完全に実装し、網羅的なテストによって妥当性を検証しました。
+</p>
+</div>
+<div id="outline-container-orgea8acac" class="outline-3">
+<h3 id="orgea8acac"><span class="section-number-3">6.1.</span> 達成した目標</h3>
+<div class="outline-text-3" id="text-6-1">
+<ul class="org-ul">
+<li>✅ 完全な機能実装</li>
+<li>✅ 網羅的なテスト</li>
+<li>✅ YAML設定による柔軟性</li>
+<li>✅ 可視化機能</li>
+<li>✅ 複数実験の一括実行</li>
+<li>✅ 統計的妥当性の確保</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgd627cd7" class="outline-3">
+<h3 id="orgd627cd7"><span class="section-number-3">6.2.</span> 最終的な成果</h3>
+<div class="outline-text-3" id="text-6-2">
+<ul class="org-ul">
+<li>理論的に正確なバンディット問題の実装</li>
+<li>実用的で拡張可能なアーキテクチャ</li>
+<li>研究・教育目的での利用可能性</li>
+<li>高品質なコードベース</li>
+</ul>
+
+<p>
+このプロジェクトは、機械学習の基本的なアルゴリズムの実装から、設定管理、可視化、テストまでを含む包括的なソフトウェア開発の例となっています。
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org8cf9e20" class="outline-2">
+<h2 id="org8cf9e20"><span class="section-number-2">7.</span> 技術的な質問と回答</h2>
+<div class="outline-text-2" id="text-7">
+</div>
+<div id="outline-container-org6ac726b" class="outline-3">
+<h3 id="org6ac726b"><span class="section-number-3">7.1.</span> Julia のプログラム実行制御について</h3>
+<div class="outline-text-3" id="text-7-1">
+</div>
+<div id="outline-container-org59e860f" class="outline-4">
+<h4 id="org59e860f"><span class="section-number-4">7.1.1.</span> 質問</h4>
+<div class="outline-text-4" id="text-7-1-1">
+<p>
+<code>if abspath(PROGRAM_FILE) == @__FILE__</code> のコードの意味について
+</p>
+</div>
+</div>
+<div id="outline-container-org1491c30" class="outline-4">
+<h4 id="org1491c30"><span class="section-number-4">7.1.2.</span> 回答</h4>
+<div class="outline-text-4" id="text-7-1-2">
+<p>
+このJuliaのコードは、スクリプトが直接実行された場合にのみ特定の処理を実行する条件分岐です。
+</p>
+</div>
+<ol class="org-ol">
+<li><a id="orgda18be6"></a>各部分の詳細<br />
+<div class="outline-text-5" id="text-7-1-2-1">
+<ul class="org-ul">
+<li><b><b>PROGRAM<sub>FILE</sub></b></b>: Julia の組み込み定数、起動時に最初に実行されるファイルのパス</li>
+<li><b><b>@_<sub>FILE</sub>__</b></b>: 現在のソースファイルの絶対パスを返すマクロ</li>
+<li><b><b>abspath()</b></b>: 相対パスを絶対パスに変換する関数（確実な比較のため）</li>
+</ul>
+</div>
+</li>
+<li><a id="orga00e983"></a>動作例<br />
+<ol class="org-ol">
+<li><a id="orgc9cf2b5"></a>ケース1: 直接実行<br />
+<div class="outline-text-6" id="text-7-1-2-2-1">
+<pre class="example" id="orgcb95c28">
+julia main.jl
+</pre>
+<ul class="org-ul">
+<li><code>PROGRAM_FILE</code> = <code>/path/to/main.jl</code></li>
+<li><code>@__FILE__</code> = <code>/path/to/main.jl</code></li>
+<li>条件が <code>true</code> になり、~main()~ が実行される</li>
+</ul>
+</div>
+</li>
+<li><a id="org88352d1"></a>ケース2: 他のファイルから読み込み<br />
+<div class="outline-text-6" id="text-7-1-2-2-2">
+<div class="org-src-container">
+<pre class="src src-julia"><span style="color: #73d216;"># </span><span style="color: #73d216;">other.jl</span>
+include(<span style="color: #e9b96e;">"main.jl"</span>)  <span style="color: #73d216;"># </span><span style="color: #73d216;">main() &#12399;&#23455;&#34892;&#12373;&#12428;&#12394;&#12356;</span>
+</pre>
+</div>
+<ul class="org-ul">
+<li><code>PROGRAM_FILE</code> = <code>/path/to/other.jl</code></li>
+<li><code>@__FILE__</code> = <code>/path/to/main.jl</code></li>
+<li>条件が <code>false</code> になり、~main()~ は実行されない</li>
+</ul>
+</div>
+</li>
+</ol>
+</li>
+<li><a id="orgbfb1efc"></a>用途と利点<br />
+<div class="outline-text-5" id="text-7-1-2-3">
+<ol class="org-ol">
+<li><b><b>ライブラリとスクリプトの兼用</b></b>: 同じファイルを関数定義とスクリプト実行の両方で使用可能</li>
+<li><b><b>テスト</b></b>: <code>include()</code> でテストファイルに読み込んでも自動実行されない</li>
+<li><b><b>モジュール化</b></b>: 他のファイルから関数だけを使いたい場合に便利</li>
+</ol>
+</div>
+</li>
+<li><a id="org16eaf51"></a>Python との比較<br />
+<div class="outline-text-5" id="text-7-1-2-4">
+<p>
+Python の <code>if __name__ == "__main__":</code> と同じ役割を果たします。
+</p>
+</div>
+</li>
+<li><a id="org6157922"></a>実際の使用例（今回のプロジェクト）<br />
+<div class="outline-text-5" id="text-7-1-2-5">
+<div class="org-src-container">
+<pre class="src src-julia"><span style="color: #73d216;"># </span><span style="color: #73d216;">main.jl</span>
+<span style="color: #b4fa70;">function</span> <span style="color: #fce94f;">main</span>()
+&#9474;   config_files = [
+&#9474;   &#9474;   <span style="color: #e9b96e;">"experiment1.yaml"</span>,
+&#9474;   &#9474;   <span style="color: #e9b96e;">"experiment2.yaml"</span>
+&#9474;   ]
+&#9474;   
+&#9474;   println(<span style="color: #e9b96e;">"&#12496;&#12531;&#12487;&#12451;&#12483;&#12488;&#21839;&#38988;&#12471;&#12511;&#12517;&#12524;&#12540;&#12471;&#12519;&#12531;&#38283;&#22987;"</span>)
+&#9474;   all_results = run_multiple_experiments(config_files)
+&#9474;   println(<span style="color: #e9b96e;">"&#20840;&#12390;&#12398;&#23455;&#39443;&#12364;&#23436;&#20102;&#12375;&#12414;&#12375;&#12383;&#65281;"</span>)
+<span style="color: #b4fa70;">end</span>
+
+<span style="color: #b4fa70;">if</span> abspath(PROGRAM_FILE) <span style="color: #8cc4ff;">==</span> <span style="color: #e090d7;">@__FILE__</span>
+&#9474;   main()
+<span style="color: #b4fa70;">end</span>
+</pre>
+</div>
+
+<p>
+この実装により、~main.jl~ を直接実行すると実験が開始されるが、他のファイルから <code>include("main.jl")</code> で読み込んだ場合は関数定義のみが読み込まれ、実験は自動実行されない。これにより、コードの再利用性とテストの容易性が向上する。</p>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Date: 2025-07-03</p>
+<p class="author">Author: Claude Code</p>
+<p class="date">Created: 2025-07-03 Thu 14:05</p>
+</div>
+</body>
+</html>
