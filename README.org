@@ -2,7 +2,7 @@
 #+date: 2025-07-03
 #+author: Claude Code
 #+startup: overview
-
+* Claude Code に作らせた、 YAML を用いたバンディット問題のコード
 * 開発概要
 ** プロジェクト要件
 - バンディット問題のシミュレーションプログラムをJuliaで開発
